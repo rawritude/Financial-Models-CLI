@@ -32,7 +32,7 @@ facility for the period ending {{ period or "—" }}.
 | Covenant | Test | Actual | Verdict |
 |---|---|---|---|
 {% for c in covenants %}
-| {{ c.name }} | {{ c.output }} {{ c.operator }} {{ c.threshold }} | {{ c.actual | ratio if c.actual is not none else "—" }} | {{ {"ok": "PASS", "watch": "WATCH", "breach": "BREACH"}.get(c.severity, c.severity) }} |
+| {{ c.name }} | {{ c.output }} {{ c.operator }} {{ ("{:,.0f}".format(c.threshold)) if c.threshold > 100 else c.threshold }} | {% if c.actual is none %}—{% elif c.threshold > 100 %}{{ c.actual | money(deal.currency) }}{% else %}{{ c.actual | ratio }}{% endif %} | {{ {"ok": "PASS", "watch": "WATCH", "breach": "BREACH"}.get(c.severity, c.severity) }} |
 {% endfor %}
 {% endif %}
 

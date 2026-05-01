@@ -86,10 +86,23 @@ fmcli show highway-407-extension                  # deal summary
 fmcli update highway-407-extension <inputs.xlsx>  # propagate inputs
 fmcli extract highway-407-extension --outputs DSCR,LLCR,DebtBalance
 fmcli covenant highway-407-extension              # test all covenants
-fmcli notice highway-407-extension drawdown --amount 25000000
+fmcli notice highway-407-extension drawdown --amount 25000000  # borrower-facing
+fmcli report  credit-memo highway-407-extension   # internal credit memo
+fmcli report  portfolio                           # portfolio-level briefing
+fmcli sensitivity highway-407-extension --shock "Revenue_Q1:mul:0.90"
+fmcli portfolio                                   # cross-deal KPI rollup
 fmcli audit highway-407-extension                 # show audit trail
-fmcli reconcile <model_a.xlsx> <model_b.xlsx>     # diff two models
+fmcli backup highway-407-extension --reason pre-quarter-close
+fmcli reconcile <deal_id> <other_model.xlsx>      # diff outputs vs another workbook
 ```
+
+### External vs internal artifacts
+
+- `fmcli notice <deal> <template>` — **borrower-facing**. DRAFT_ prefix until
+  the user finalizes. Templates: drawdown confirmation, quarterly monitoring,
+  covenant breach, interest payment, rate reset, waiver, annual review.
+- `fmcli report <kind>` — **internal**. INTERNAL_ prefix. Kinds: `credit-memo`
+  (per deal), `portfolio` (cross-deal investment-committee briefing).
 
 Every write goes through the audit logger. Nothing in this repo silently
 mutates a model.

@@ -54,13 +54,17 @@ def list_templates() -> list[str]:
     return sorted(p.name.removesuffix(".md.j2") for p in templates_dir().glob("*.md.j2"))
 
 
-def render(deal_id: str, template: str, context: dict[str, Any], draft: bool = True) -> Path:
-    """Render a template into the deal's outputs/ directory."""
+def _build_env() -> Environment:
     env = _env()
     env.filters["money"] = _money
     env.filters["ratio"] = _ratio
     env.filters["pct"] = _pct
+    return env
 
+
+def render(deal_id: str, template: str, context: dict[str, Any], draft: bool = True) -> Path:
+    """Render a template into the deal's outputs/ directory."""
+    env = _build_env()
     tmpl = env.get_template(f"{template}.md.j2")
     rendered = tmpl.render(**context, today=date.today().isoformat())
 
@@ -69,3 +73,13 @@ def render(deal_id: str, template: str, context: dict[str, Any], draft: bool = T
     out = deal_outputs_dir(deal_id) / f"{prefix}{today}_{template}.md"
     out.write_text(rendered)
     return out
+
+
+def render_to_path(template: str, context: dict[str, Any], out_path: Path) -> Path:
+    """Render a template to an arbitrary path (used for portfolio-level reports)."""
+    env = _build_env()
+    tmpl = env.get_template(f"{template}.md.j2")
+    rendered = tmpl.render(**context, today=date.today().isoformat())
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(rendered)
+    return out_path

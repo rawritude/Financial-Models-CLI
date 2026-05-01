@@ -1,0 +1,90 @@
+# INTERNAL CREDIT MEMO — {{ deal.project | upper }}
+
+**Confidential. Not for external distribution.**
+
+| | |
+|---|---|
+| Borrower         | {{ deal.borrower }}                                       |
+| Sector           | {{ deal.sector }}                                         |
+| Facility         | {{ deal.facility }}                                       |
+| Commitment       | {{ deal.currency }} {{ "{:,.0f}".format(deal.commitment) }} |
+| Closing          | {{ deal.closing_date }}                                   |
+| Maturity         | {{ deal.maturity_date }}                                  |
+| Reporting period | {{ period or "—" }}                                       |
+| Memo date        | {{ today }}                                               |
+| Author           | _credit officer name_                                     |
+
+---
+
+## 1. Recommendation
+
+> _Maintain · Watch · Restructure_  — _replace with the recommendation_
+
+One-paragraph rationale. Keep to three sentences.
+
+## 2. Headline financial outputs
+
+| Metric | Current | Prior period | Δ |
+|---|---|---|---|
+| DSCR (period)            | {{ outputs.DSCR | ratio if outputs.DSCR is not none else "—" }}            | _prior_ | _Δ_ |
+| Min DSCR (forecast)      | {{ outputs.MinDSCRForecast | ratio if outputs.MinDSCRForecast is not none else "—" }} | _prior_ | _Δ_ |
+| LLCR                     | {{ outputs.LLCR | ratio if outputs.LLCR is not none else "—" }}            | _prior_ | _Δ_ |
+| Outstanding senior debt  | {{ outputs.DebtBalance | money(deal.currency) if outputs.DebtBalance is not none else "—" }} | _prior_ | _Δ_ |
+| DSRA balance             | {{ outputs.DSRA | money(deal.currency) if outputs.DSRA is not none else "—" }} | _prior_ | _Δ_ |
+| Quarterly debt service   | {{ outputs.DebtService | money(deal.currency) if outputs.DebtService is not none else "—" }} | _prior_ | _Δ_ |
+| Quarterly CFADS          | {{ outputs.CFADS | money(deal.currency) if outputs.CFADS is not none else "—" }} | _prior_ | _Δ_ |
+
+## 3. Covenant compliance
+
+{% if covenants %}
+| Covenant | Test | Actual | Verdict |
+|---|---|---|---|
+{% for c in covenants %}
+| {{ c.name }} | {{ c.output }} {{ c.operator }} {{ ("{:,.0f}".format(c.threshold)) if c.threshold > 100 else c.threshold }} | {% if c.actual is none %}—{% elif c.threshold > 100 %}{{ c.actual | money(deal.currency) }}{% else %}{{ c.actual | ratio }}{% endif %} | **{{ {"ok": "PASS", "watch": "WATCH", "breach": "BREACH"}.get(c.severity, c.severity) }}** |
+{% endfor %}
+{% endif %}
+
+{% set breaches = covenants | selectattr("severity", "equalto", "breach") | list %}
+{% set watches  = covenants | selectattr("severity", "equalto", "watch")  | list %}
+{% if breaches %}
+> **Breach.** {{ breaches | length }} covenant(s) failed. A separate
+> covenant-breach notice has been issued to the Borrower under the same cover.
+> Recommend Risk review the cure provisions in §[ref].
+{% elif watches %}
+> **Watchlist.** {{ watches | length }} covenant(s) within 10% of threshold.
+> No action required at this time; continue monthly cadence.
+{% else %}
+> All covenants in PASS with > 10% headroom.
+{% endif %}
+
+## 4. Material developments
+
+_To be completed by the analyst — operational events, project milestones,
+borrower communications, regulatory updates, sector-level developments._
+
+## 5. Stress and scenarios
+
+_Reference the sensitivity output. If a stress-test was run for this memo,
+paste the table here. Mention any scenario that breaches a covenant._
+
+## 6. Outlook
+
+_Forward-looking commentary — projection vs base case, expected drawdowns,
+upcoming reset / amortization steps, items to monitor._
+
+## 7. Recent audit activity (last 10 events)
+
+{% if audit_events %}
+| Date | User | Event | Detail |
+|---|---|---|---|
+{% for e in audit_events %}
+| {{ e.ts }} | {{ e.user }} | {{ e.event }} | {{ e.detail }} |
+{% endfor %}
+{% else %}
+_No recent audit events._
+{% endif %}
+
+---
+
+Distribution: Credit Risk · Portfolio Management · Investment Committee
+Source model: `data/deals/{{ deal.id }}/model.xlsx` (snapshot at {{ today }})

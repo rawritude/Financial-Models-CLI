@@ -106,6 +106,17 @@ def _fmt(v) -> str:
     return str(v)
 
 
+def _fmt_covenant_short(c, include_threshold: bool = False) -> str:
+    """Render a one-line covenant summary, picking ratio vs money based on threshold magnitude."""
+    if c.threshold > 100:
+        actual = f"CAD {c.actual:,.0f}"
+        thresh = f"CAD {c.threshold:,.0f}"
+    else:
+        actual = f"{c.actual:.2f}x"
+        thresh = f"{c.threshold:.2f}x"
+    return f"{c.name} ({actual} vs {thresh})" if include_threshold else f"{c.name} ({actual})"
+
+
 # ---------------------------------------------------------------------------
 # inspect a workbook (used by agents that need orientation)
 # ---------------------------------------------------------------------------
@@ -316,6 +327,132 @@ def cmd_notice(deal_id: str, template: str, amount: float | None, period: str | 
     console.print(f"[green]✓[/] Notice drafted: {out_path}")
     if not final:
         console.print("[dim]Filename starts with DRAFT_ — review and remove the prefix to finalize.[/]")
+
+
+# ---------------------------------------------------------------------------
+# report — internal-facing reports (credit memo per deal, portfolio review)
+# ---------------------------------------------------------------------------
+
+@main.command("report", help="Generate an internal report (credit memo for one deal, or a portfolio review across all deals).")
+@click.argument("kind", type=click.Choice(["credit-memo", "portfolio"]))
+@click.argument("deal_id", required=False)
+@click.option("--period", default=None, help="Reporting period, e.g. 2026-Q1.")
+@click.option("--out", "out_path", type=click.Path(path_type=Path), default=None,
+              help="Override output path.")
+def cmd_report(kind: str, deal_id: str | None, period: str | None, out_path: Path | None) -> None:
+    from datetime import datetime, timedelta, timezone
+
+    if kind == "credit-memo":
+        if not deal_id:
+            _err("credit-memo requires a deal_id, e.g. `fmcli report credit-memo highway-407-east-extension`.")
+        d = load_deal(deal_id)
+        outputs_v = excel.read_cells(deal_model_path(deal_id), d.outputs)
+        cov_results = covenants.test_all(d)
+
+        # Collect last 10 audit events with a brief detail string.
+        ev_raw = audit.read(deal_id)[-10:]
+        audit_events = []
+        for e in ev_raw:
+            if e["event"] == "model.update":
+                detail = f"{len(e.get('writes', []))} cell(s) from {Path(e.get('submission','')).name}"
+            elif e["event"] == "covenant.test":
+                rs = e.get("results", [])
+                breach = sum(1 for r in rs if r.get("severity") == "breach")
+                watch  = sum(1 for r in rs if r.get("severity") == "watch")
+                detail = f"{len(rs)} tests, {breach} breach, {watch} watch"
+            elif e["event"] == "notice.draft":
+                detail = f"{e.get('template')} → {Path(e.get('output','')).name}"
+            else:
+                detail = ""
+            audit_events.append({
+                "ts": e.get("ts", ""),
+                "user": e.get("user", ""),
+                "event": e.get("event", ""),
+                "detail": detail,
+            })
+
+        ctx = {
+            "deal": d,
+            "outputs": outputs_v,
+            "covenants": cov_results,
+            "period": period,
+            "audit_events": audit_events,
+        }
+        out = notices.render(deal_id, "credit-memo", ctx, draft=True)
+        # The credit memo is internal — flag it differently from borrower notices.
+        new_path = out.with_name(out.name.replace("DRAFT_", "INTERNAL_"))
+        out.rename(new_path)
+        audit.append(deal_id, "report.credit_memo", {"output": str(new_path), "period": period})
+        console.print(f"[green]✓[/] Internal credit memo: {new_path}")
+        return
+
+    # ----- portfolio review -----
+    df = portfolio.rollup()
+    if df.empty:
+        _err("No deals in workspace.")
+
+    deals_ctx: list[dict] = []
+    watchlist: list[dict] = []
+    breached: list[dict] = []
+    sector_totals: dict[str, float] = {}
+
+    for _, row in df.iterrows():
+        d = load_deal(row["deal"])
+        cov = covenants.test_all(d)
+        breaches = [c for c in cov if c.severity == "breach"]
+        watches  = [c for c in cov if c.severity == "watch"]
+        status = "BREACH" if breaches else ("WATCH" if watches else "OK")
+        item = {
+            "id": d.id,
+            "sector": d.sector,
+            "currency": d.currency,
+            "commitment": d.commitment,
+            "DSCR": row.get("DSCR"),
+            "LLCR": row.get("LLCR"),
+            "DebtBalance": row.get("DebtBalance"),
+            "status": status,
+            "watch_summary": ", ".join(_fmt_covenant_short(c) for c in watches if c.actual is not None) or "—",
+            "breach_summary": ", ".join(_fmt_covenant_short(c, include_threshold=True) for c in breaches if c.actual is not None) or "—",
+        }
+        deals_ctx.append(item)
+        if breaches:
+            breached.append(item)
+        elif watches:
+            watchlist.append(item)
+        sector_totals[d.sector] = sector_totals.get(d.sector, 0.0) + d.commitment
+
+    total_committed = sum(d["commitment"] for d in deals_ctx)
+    sector_pairs = sorted(sector_totals.items(), key=lambda kv: -kv[1])
+
+    # 30-day activity rollup across every deal's audit log.
+    cutoff = datetime.now(timezone.utc) - timedelta(days=30)
+    activity: dict[str, int] = {}
+    for d in deals_ctx:
+        for e in audit.read(d["id"]):
+            try:
+                ts = datetime.strptime(e["ts"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+            except (KeyError, ValueError):
+                continue
+            if ts < cutoff:
+                continue
+            key = e["event"].replace(".", "_")
+            activity[key] = activity.get(key, 0) + 1
+
+    ctx = {
+        "deals": deals_ctx,
+        "watchlist": watchlist,
+        "breached": breached,
+        "sectors": sorted({d["sector"] for d in deals_ctx}),
+        "sector_totals": sector_pairs,
+        "total_committed": total_committed,
+        "activity": activity,
+    }
+
+    if out_path is None:
+        from .paths import repo_root
+        out_path = repo_root() / "data" / f"INTERNAL_{__import__('datetime').date.today().strftime('%Y%m%d')}_portfolio-review.md"
+    notices.render_to_path("portfolio-review", ctx, out_path)
+    console.print(f"[green]✓[/] Portfolio review report: {out_path}")
 
 
 # ---------------------------------------------------------------------------
