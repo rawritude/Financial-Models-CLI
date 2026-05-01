@@ -22,6 +22,60 @@ This repo turns that loop into a multi-agent workflow. A team of specialized
 Claude agents, a Python CLI for the deterministic spreadsheet operations, and
 a library of skills + slash commands so the whole team can run the same plays.
 
+## How it fits together
+
+```
+                    Financial Models CLI — system overview
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │  Analyst in a Claude Code session                                    │
+  │                                                                      │
+  │     > /monthly-update  highway-407-east-extension                    │
+  │     > /covenant-review oneida-energy-storage                         │
+  │     > /portfolio-review                                              │
+  │     > "draft a rate reset notice for 5.40% effective 2026-Q1"        │
+  └─────────────────────────────┬────────────────────────────────────────┘
+                                │ routes intent to specialists
+  ┌─────────────────────────────▼────────────────────────────────────────┐
+  │  deal-orchestrator  (planner)                                        │
+  │  decomposes the task, delegates, synthesizes the result              │
+  └─┬────────────┬────────────┬────────────┬────────────┬────────────┬───┘
+    │            │            │            │            │            │
+    ▼            ▼            ▼            ▼            ▼            ▼
+ ┌──────┐   ┌───────┐    ┌───────┐    ┌────────┐   ┌──────────┐ ┌───────┐
+ │model-│   │output-│    │covnt- │    │notice- │   │reconciler│ │audit- │
+ │updatr│   │extr.  │    │checkr │    │drafter │   │          │ │logger │
+ └──┬───┘   └──┬────┘    └──┬────┘    └──┬─────┘   └──┬───────┘ └──┬────┘
+    │  judgment work only — every number comes from fmcli below    │
+    └─────┬─────┴────────┬───┴───────┬────┴──────┬────┴────────────┘
+          │              │           │           │
+  ┌───────▼──────────────▼───────────▼───────────▼──────────────────────┐
+  │  fmcli — deterministic Python CLI                                   │
+  │                                                                     │
+  │   update     extract     covenant    sensitivity    portfolio       │
+  │   notice     report      reconcile   backup         restore         │
+  │   compute    audit       inspect     templates      show / list     │
+  │                                                                     │
+  │   • auto-snapshot on every write   • append-only audit log          │
+  │   • Python-side recalc (no Excel/LibreOffice required)              │
+  │   • Jinja2 templates for every borrower notice + internal report    │
+  └───────────────────────────┬─────────────────────────────────────────┘
+                              │
+  ┌───────────────────────────▼─────────────────────────────────────────┐
+  │  data/                                                              │
+  │                                                                     │
+  │    deals/<deal>/                                                    │
+  │      model.xlsx        ← Inputs · DebtSchedule · CashFlow · Outputs │
+  │      deal.yaml         ← named outputs, covenants, input map        │
+  │      inputs/           ← borrower submissions land here             │
+  │      outputs/          ← DRAFT_*.md (borrower) · INTERNAL_*.md      │
+  │      .backups/         ← every snapshot, retained 50 deep           │
+  │      audit.log         ← who · when · source · before · after       │
+  │                                                                     │
+  │    templates/          ← Jinja2 notice + report templates           │
+  └─────────────────────────────────────────────────────────────────────┘
+```
+
 ## Quick start
 
 ```bash

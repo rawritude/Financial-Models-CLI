@@ -74,6 +74,38 @@ Or step by step, if you prefer:
 5. Review the rendered notice in `data/deals/<deal>/outputs/`.
 6. Hand it to the user for sign-off before sending.
 
+What happens under the hood:
+
+```
+  borrower submission .xlsx
+            │
+            ▼
+  ┌─── fmcli update ─────────────────────────────────────────────┐
+  │  1. snapshot model.xlsx → .backups/                          │
+  │  2. read borrower labels → map via deal.input_map            │
+  │  3. write input cells (openpyxl)                             │
+  │  4. compute.recompute() → recalc DSCR / LLCR / DebtBalance   │
+  │  5. append audit.log row                                     │
+  └──────────────────────────────────────────────────────────────┘
+            │
+            ▼
+  ┌─── fmcli extract ──────────┐    ┌─── fmcli covenant ─────────┐
+  │  pull named outputs        │ ─▶ │  test all covenants        │
+  │  DSCR · LLCR · DebtBalance │    │  classify PASS/WATCH/      │
+  │  DSRA · AvailableCommitment│    │  BREACH · append audit     │
+  └────────────────────────────┘    └────────────────────────────┘
+            │
+            ▼
+  ┌─── fmcli notice / fmcli report ──────────────────────────────┐
+  │  render Jinja template with live figures                     │
+  │    notice → DRAFT_<date>_*.md      (borrower-facing)         │
+  │    report → INTERNAL_<date>_*.md   (credit / IC)             │
+  └──────────────────────────────────────────────────────────────┘
+            │
+            ▼
+   Analyst reviews draft, finalizes, sends.
+```
+
 ### New drawdown request
 
 ```
