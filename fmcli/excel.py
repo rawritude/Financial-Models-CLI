@@ -104,7 +104,8 @@ def read_borrower_submission(path: Path, sheet: str | None = None) -> dict[str, 
             if not row or len(row) < 2:
                 continue
             label, value = row[0], row[1]
-            if label is None:
+            if label is None or value is None:
+                # Skip blank rows and descriptive note rows (label-only).
                 continue
             label = str(label).strip()
             if not label or label.lower() in {"label", "metric", "field"}:

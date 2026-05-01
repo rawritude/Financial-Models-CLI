@@ -202,6 +202,19 @@ asking you to confirm before any external-facing artifact is finalized.
 5. **Human-in-the-loop on external artifacts.** Anything that leaves the
    bank (a notice, a covenant breach letter) requires explicit confirmation.
 
+## Scenario library
+
+A library of fabricated borrower submissions per deal — clean, downside,
+stress (revenue / opex / rate), upside, mislabeled, partial, next-period
+roll. See [SCENARIOS.md](./SCENARIOS.md) for the full catalogue.
+
+```bash
+python3 scripts/build_scenarios.py    # rebuild scenarios any time
+ls data/deals/highway-407-east-extension/inputs/scenarios/
+fmcli update highway-407-east-extension \
+  data/deals/highway-407-east-extension/inputs/scenarios/q1-stress-rev.xlsx
+```
+
 ## Status
 
 Prototype. The sample deals, model structure, and notice templates are
