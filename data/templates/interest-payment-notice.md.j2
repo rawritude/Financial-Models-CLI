@@ -1,0 +1,30 @@
+**INTEREST PAYMENT NOTICE**
+
+| | |
+|---|---|
+| Borrower      | {{ deal.borrower }}                                              |
+| Project       | {{ deal.project }}                                               |
+| Facility      | {{ deal.facility }}                                              |
+| Notice date   | {{ today }}                                                      |
+| Period        | {{ period or "—" }}                                              |
+
+---
+
+Pursuant to §[ref] of the facility agreement, the following interest
+payment will become due in respect of the next interest period:
+
+| | |
+|---|---|
+| **Estimated interest payable** | {{ amount | money(deal.currency) if amount is not none else "—" }} |
+| **Outstanding senior debt**    | {{ outputs.DebtBalance | money(deal.currency) if outputs.DebtBalance is not none else "—" }} |
+{% if outputs.AvailableCommitment is defined %}
+| Undrawn commitment             | {{ outputs.AvailableCommitment | money(deal.currency) if outputs.AvailableCommitment is not none else "—" }} |
+{% endif %}
+
+Settlement instructions are unchanged from the closing memorandum. Please
+remit the payment by the due date specified in the facility agreement.
+
+---
+
+Issued by: Canada Infrastructure Bank · Treasury
+Contact: {{ deal.parties.lender.contact if deal.parties.lender is defined else "treasury@cib-bic.ca" }}

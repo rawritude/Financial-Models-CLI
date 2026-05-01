@@ -1,0 +1,36 @@
+**RATE RESET NOTICE**
+
+| | |
+|---|---|
+| Borrower      | {{ deal.borrower }}                                              |
+| Project       | {{ deal.project }}                                               |
+| Facility      | {{ deal.facility }}                                              |
+| Notice date   | {{ today }}                                                      |
+| Reset period  | {{ period or "—" }}                                              |
+
+---
+
+Pursuant to §[ref] of the facility agreement, the applicable interest rate
+for the upcoming interest period has been reset as follows:
+
+| | |
+|---|---|
+| **Reference rate**         | _to be confirmed by the Agent Bank_ |
+| **Spread**                 | _per facility agreement, fixed at close_ |
+| **Effective all-in rate**  | _reference + spread_ |
+
+Updated headline outputs at this rate:
+
+| Metric | Value |
+|---|---|
+| DSCR (period)              | {{ outputs.DSCR | ratio if outputs.DSCR is not none else "—" }} |
+| LLCR                       | {{ outputs.LLCR | ratio if outputs.LLCR is not none else "—" }} |
+| Outstanding senior debt    | {{ outputs.DebtBalance | money(deal.currency) if outputs.DebtBalance is not none else "—" }} |
+
+The interest amount payable for this period will be advised separately in
+the interest payment notice ahead of the due date.
+
+---
+
+Issued by: Canada Infrastructure Bank · Treasury
+Contact: {{ deal.parties.lender.contact if deal.parties.lender is defined else "treasury@cib-bic.ca" }}

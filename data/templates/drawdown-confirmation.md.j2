@@ -1,0 +1,43 @@
+**DRAWDOWN CONFIRMATION**
+
+| | |
+|---|---|
+| Borrower      | {{ deal.borrower }}                     |
+| Project       | {{ deal.project }}                      |
+| Facility      | {{ deal.facility }}                     |
+| Notice date   | {{ today }}                             |
+| Period        | {{ period or "—" }}                     |
+
+---
+
+We confirm receipt of your drawdown request and the disbursement of the
+following advance under the above-referenced facility:
+
+| | |
+|---|---|
+| **Advance amount** | {{ amount | money(deal.currency) if amount is not none else "—" }} |
+| **Outstanding balance (post-advance)** | {{ outputs.DebtBalance | money(deal.currency) if outputs.DebtBalance is not none else "—" }} |
+{% if outputs.AvailableCommitment is defined %}
+| **Undrawn commitment** | {{ outputs.AvailableCommitment | money(deal.currency) if outputs.AvailableCommitment is not none else "—" }} |
+{% endif %}
+
+The advance has been recorded in the project finance model. The next
+periodic interest and amortization schedule remains as set out in the
+facility agreement (§[ref]).
+
+Updated headline ratios following this advance:
+
+| Metric | Value |
+|---|---|
+| DSCR (period)       | {{ outputs.DSCR | ratio if outputs.DSCR is not none else "—" }} |
+| LLCR                | {{ outputs.LLCR | ratio if outputs.LLCR is not none else "—" }} |
+{% if outputs.MinDSCRForecast is defined %}
+| Minimum DSCR (forecast) | {{ outputs.MinDSCRForecast | ratio if outputs.MinDSCRForecast is not none else "—" }} |
+{% endif %}
+
+Please direct any queries to the contact below.
+
+---
+
+Issued by: Canada Infrastructure Bank
+Contact: {{ deal.parties.lender.contact if deal.parties.lender is defined else "monitoring@cib-bic.ca" }}

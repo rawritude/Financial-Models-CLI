@@ -1,0 +1,67 @@
+**MONITORING REPORT — {{ period or "CURRENT PERIOD" }}**
+
+| | |
+|---|---|
+| Borrower      | {{ deal.borrower }}                     |
+| Project       | {{ deal.project }}                      |
+| Facility      | {{ deal.facility }}                     |
+| Commitment    | {{ deal.currency }} {{ "{:,.0f}".format(deal.commitment) }} |
+| Closing       | {{ deal.closing_date }}                 |
+| Maturity      | {{ deal.maturity_date }}                |
+| Report date   | {{ today }}                             |
+
+---
+
+## 1. Period summary
+
+This report covers the {{ period or "current reporting" }} period for the
+above-referenced facility. Figures presented are extracted from the project
+financial model as last updated on {{ today }}.
+
+## 2. Headline financial outputs
+
+| Metric | Value |
+|---|---|
+| DSCR (period)              | {{ outputs.DSCR | ratio if outputs.DSCR is not none else "—" }} |
+| LLCR                       | {{ outputs.LLCR | ratio if outputs.LLCR is not none else "—" }} |
+| Outstanding senior debt    | {{ outputs.DebtBalance | money(deal.currency) if outputs.DebtBalance is not none else "—" }} |
+| DSRA balance               | {{ outputs.DSRA | money(deal.currency) if outputs.DSRA is not none else "—" }} |
+{% if outputs.AvailableCommitment is defined %}
+| Available commitment       | {{ outputs.AvailableCommitment | money(deal.currency) if outputs.AvailableCommitment is not none else "—" }} |
+{% endif %}
+{% if outputs.MinDSCRForecast is defined %}
+| Minimum DSCR (forecast)    | {{ outputs.MinDSCRForecast | ratio if outputs.MinDSCRForecast is not none else "—" }} |
+{% endif %}
+
+## 3. Covenant compliance
+
+{% if covenants %}
+| Covenant | Test | Actual | Verdict |
+|---|---|---|---|
+{% for c in covenants %}
+| {{ c.name }} | {{ c.output }} {{ c.operator }} {{ c.threshold }} | {{ c.actual | ratio if c.actual is not none else "—" }} | {{ {"ok": "PASS", "watch": "WATCH", "breach": "BREACH"}.get(c.severity, c.severity) }} |
+{% endfor %}
+{% else %}
+No covenants tested for this deal.
+{% endif %}
+
+{% set breaches = covenants | selectattr("severity", "equalto", "breach") | list %}
+{% if breaches %}
+> **Breach flagged.** Refer to facility agreement §[ref] for cure provisions.
+> A separate covenant-breach notice has been issued under the same cover.
+{% endif %}
+
+## 4. Material developments
+
+_To be completed by the analyst — operational events, project milestones,
+borrower communications, regulatory updates._
+
+## 5. Outlook
+
+_To be completed by the analyst — forward-looking commentary informed by
+sensitivity work, project updates, sector trends._
+
+---
+
+Issued by: Canada Infrastructure Bank · Monitoring
+Contact: {{ deal.parties.lender.contact if deal.parties.lender is defined else "monitoring@cib-bic.ca" }}

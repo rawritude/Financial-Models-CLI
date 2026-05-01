@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(fmcli:*)",
+      "Bash(python3 -m fmcli:*)",
+      "Bash(ls:*)",
+      "Bash(cat data/deals/*/deal.yaml)",
+      "Bash(cat data/deals/*/audit.log)",
+      "Read(./**)"
+    ]
+  }
+}

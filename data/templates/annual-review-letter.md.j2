@@ -1,0 +1,50 @@
+**ANNUAL REVIEW**
+
+| | |
+|---|---|
+| Borrower      | {{ deal.borrower }}                                              |
+| Project       | {{ deal.project }}                                               |
+| Facility      | {{ deal.facility }}                                              |
+| Review date   | {{ today }}                                                      |
+
+---
+
+This letter accompanies the Lender's annual review of the above-referenced
+facility for the period ending {{ period or "—" }}.
+
+## Headline financial outputs
+
+| Metric | Value |
+|---|---|
+| DSCR (period)              | {{ outputs.DSCR | ratio if outputs.DSCR is not none else "—" }} |
+| LLCR                       | {{ outputs.LLCR | ratio if outputs.LLCR is not none else "—" }} |
+| Outstanding senior debt    | {{ outputs.DebtBalance | money(deal.currency) if outputs.DebtBalance is not none else "—" }} |
+{% if outputs.DSRA is defined %}
+| DSRA balance               | {{ outputs.DSRA | money(deal.currency) if outputs.DSRA is not none else "—" }} |
+{% endif %}
+{% if outputs.AvailableCommitment is defined %}
+| Available commitment       | {{ outputs.AvailableCommitment | money(deal.currency) if outputs.AvailableCommitment is not none else "—" }} |
+{% endif %}
+
+## Covenant compliance
+
+{% if covenants %}
+| Covenant | Test | Actual | Verdict |
+|---|---|---|---|
+{% for c in covenants %}
+| {{ c.name }} | {{ c.output }} {{ c.operator }} {{ c.threshold }} | {{ c.actual | ratio if c.actual is not none else "—" }} | {{ {"ok": "PASS", "watch": "WATCH", "breach": "BREACH"}.get(c.severity, c.severity) }} |
+{% endfor %}
+{% endif %}
+
+## Review opinion
+
+_The Lender has completed its annual review and records the following
+review opinion (Maintain / Watch / Restructure)._
+
+A separate internal credit memo accompanies this letter and is not
+distributed to the Borrower.
+
+---
+
+Issued by: Canada Infrastructure Bank · Credit Risk
+Contact: {{ deal.parties.lender.contact if deal.parties.lender is defined else "credit@cib-bic.ca" }}

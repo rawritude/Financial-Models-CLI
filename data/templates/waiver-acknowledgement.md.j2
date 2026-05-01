@@ -1,0 +1,35 @@
+**WAIVER ACKNOWLEDGEMENT**
+
+| | |
+|---|---|
+| Borrower      | {{ deal.borrower }}                                              |
+| Project       | {{ deal.project }}                                               |
+| Facility      | {{ deal.facility }}                                              |
+| Notice date   | {{ today }}                                                      |
+| Period        | {{ period or "—" }}                                              |
+
+---
+
+In response to the Borrower's waiver request dated _[date of borrower
+request]_, and pursuant to §[ref] of the facility agreement, the Lender
+confirms the following limited waiver:
+
+> _Insert specific covenant / requirement waived, including the period
+> of effect and any conditions._
+
+This waiver is granted on a one-time basis and does not constitute a
+modification of the facility agreement. All other terms and conditions
+remain in full force and effect.
+
+For reference, the headline outputs at the date of this acknowledgement are:
+
+| Metric | Value |
+|---|---|
+| DSCR                       | {{ outputs.DSCR | ratio if outputs.DSCR is not none else "—" }} |
+| LLCR                       | {{ outputs.LLCR | ratio if outputs.LLCR is not none else "—" }} |
+| Outstanding senior debt    | {{ outputs.DebtBalance | money(deal.currency) if outputs.DebtBalance is not none else "—" }} |
+
+---
+
+Issued by: Canada Infrastructure Bank · Credit Risk
+Contact: {{ deal.parties.lender.contact if deal.parties.lender is defined else "credit@cib-bic.ca" }}

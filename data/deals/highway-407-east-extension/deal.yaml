@@ -1,0 +1,93 @@
+# Highway 407 East Extension — senior debt monitoring
+borrower: "407 East ProjectCo Ltd."
+project: "Highway 407 East Extension"
+sector: "Transportation — P3"
+facility: "Senior secured term loan, fully amortizing"
+currency: CAD
+commitment: 480000000
+closing_date: "2024-12-15"
+maturity_date: "2049-12-15"
+inputs_sheet: Inputs
+
+notes: |
+  25-year availability-payment P3 with the Province of Ontario. Senior debt
+  fully drawn at construction completion. Reference rate 3M CORRA + 185 bps,
+  resets quarterly. Eight quarters of operations modelled here for monitoring;
+  the long-tail amortization schedule is held in the master model (not in
+  scope for this CLI).
+
+parties:
+  borrower:
+    legal_name: "407 East ProjectCo Ltd."
+    contact: "lender-relations@407east-projectco.example"
+  lender:
+    legal_name: "Canada Infrastructure Bank"
+    contact: "monitoring@cib-bic.ca"
+
+# Named output cells the CLI / agents read.
+outputs:
+  DSCR:                 "Outputs!B3"
+  MinDSCRForecast:      "Outputs!B4"
+  LLCR:                 "Outputs!B5"
+  DebtBalance:          "Outputs!B6"
+  DSRA:                 "Outputs!B7"
+  DSRA_Target:          "Outputs!B8"
+  AvailableCommitment:  "Outputs!B9"
+  DebtService:          "Outputs!B10"
+  CFADS:                "Outputs!B11"
+
+# Map: borrower-submission label -> input cell in the model.
+input_map:
+  AvailabilityPayment_Q1: "Inputs!B2"
+  AvailabilityPayment_Q2: "Inputs!B3"
+  AvailabilityPayment_Q3: "Inputs!B4"
+  AvailabilityPayment_Q4: "Inputs!B5"
+  AvailabilityPayment_Q5: "Inputs!B6"
+  AvailabilityPayment_Q6: "Inputs!B7"
+  AvailabilityPayment_Q7: "Inputs!B8"
+  AvailabilityPayment_Q8: "Inputs!B9"
+  Opex_Q1:                "Inputs!B10"
+  Opex_Q2:                "Inputs!B11"
+  Opex_Q3:                "Inputs!B12"
+  Opex_Q4:                "Inputs!B13"
+  Opex_Q5:                "Inputs!B14"
+  Opex_Q6:                "Inputs!B15"
+  Opex_Q7:                "Inputs!B16"
+  Opex_Q8:                "Inputs!B17"
+  InterestRate:           "Inputs!B18"
+  InflationIndex:         "Inputs!B19"
+  DSRA_Target:            "Inputs!B20"
+  DSRA_Balance:           "Inputs!B21"
+
+covenants:
+  - name: DSCR Lock-up
+    description: "Distribution lock-up if DSCR < 1.20x in any period"
+    output: DSCR
+    operator: ">="
+    threshold: 1.20
+    severity: breach
+    tested_periods: current
+
+  - name: Forecast DSCR Floor
+    description: "Forecast minimum DSCR over remaining tenor must remain >= 1.15x"
+    output: MinDSCRForecast
+    operator: ">="
+    threshold: 1.15
+    severity: breach
+    tested_periods: forecast
+
+  - name: LLCR Floor
+    description: "LLCR must remain >= 1.30x"
+    output: LLCR
+    operator: ">="
+    threshold: 1.30
+    severity: breach
+    tested_periods: current
+
+  - name: DSRA Funding
+    description: "DSRA balance must be >= DSRA target"
+    output: DSRA
+    operator: ">="
+    threshold: 18000000
+    severity: breach
+    tested_periods: current

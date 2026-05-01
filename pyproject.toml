@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fmcli"
+version = "0.1.0"
+description = "Agent-driven workbench for infrastructure project finance — model updates, covenant testing, borrower notices."
+requires-python = ">=3.10"
+dependencies = [
+    # Spreadsheet I/O — multiple libraries because each is best at a different job:
+    #   openpyxl   reads/writes .xlsx with formulas + styles preserved
+    #   xlsxwriter creates formatted workbooks from scratch (charts, conditional fmt)
+    #   pandas     tabular analysis, reconciliation, portfolio rollups
+    "openpyxl>=3.1",
+    "xlsxwriter>=3.2",
+    "pandas>=2.2",
+    # CLI + UX
+    "click>=8.1",
+    "rich>=13.0",
+    # Config + templates
+    "PyYAML>=6.0",
+    "Jinja2>=3.1",
+]
+
+[project.scripts]
+fmcli = "fmcli.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["fmcli*"]

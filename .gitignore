@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+fmcli.egg-info/
+.eggs/
+build/
+dist/
+
+# fmcli per-deal artifacts that should not be checked in
+data/deals/*/.backups/
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local Claude Code overrides (allow .claude/ but not local-only file)
+.claude/settings.local.json

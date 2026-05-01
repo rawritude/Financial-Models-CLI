@@ -1,0 +1,98 @@
+# Oneida Energy Storage — senior debt monitoring
+borrower: "Oneida Energy Storage LP"
+project: "Oneida Energy Storage Facility"
+sector: "Clean power — battery storage"
+facility: "Senior secured term loan, project finance"
+currency: CAD
+commitment: 170000000
+closing_date: "2024-03-28"
+maturity_date: "2042-03-28"
+inputs_sheet: Inputs
+
+notes: |
+  250 MW / 1000 MWh (4-hr duration) battery storage facility on Six Nations
+  of the Grand River Territory. 20-year Capacity Services Agreement with the
+  Independent Electricity System Operator (IESO) plus arbitrage revenue.
+  Senior debt fully drawn at COD. Reference rate 3M CORRA + 215 bps,
+  resets quarterly. Eight quarters of operations modelled here.
+
+parties:
+  borrower:
+    legal_name: "Oneida Energy Storage LP"
+    contact: "loan-administration@oneidastorage.example"
+  lender:
+    legal_name: "Canada Infrastructure Bank"
+    contact: "monitoring@cib-bic.ca"
+
+outputs:
+  DSCR:                 "Outputs!B3"
+  MinDSCRForecast:      "Outputs!B4"
+  LLCR:                 "Outputs!B5"
+  DebtBalance:          "Outputs!B6"
+  DSRA:                 "Outputs!B7"
+  DSRA_Target:          "Outputs!B8"
+  AvailableCommitment:  "Outputs!B9"
+  DebtService:          "Outputs!B10"
+  CFADS:                "Outputs!B11"
+
+input_map:
+  CapacityPayment_Q1:  "Inputs!B2"
+  CapacityPayment_Q2:  "Inputs!B3"
+  CapacityPayment_Q3:  "Inputs!B4"
+  CapacityPayment_Q4:  "Inputs!B5"
+  CapacityPayment_Q5:  "Inputs!B6"
+  CapacityPayment_Q6:  "Inputs!B7"
+  CapacityPayment_Q7:  "Inputs!B8"
+  CapacityPayment_Q8:  "Inputs!B9"
+  ArbitrageRevenue_Q1: "Inputs!B10"
+  ArbitrageRevenue_Q2: "Inputs!B11"
+  ArbitrageRevenue_Q3: "Inputs!B12"
+  ArbitrageRevenue_Q4: "Inputs!B13"
+  ArbitrageRevenue_Q5: "Inputs!B14"
+  ArbitrageRevenue_Q6: "Inputs!B15"
+  ArbitrageRevenue_Q7: "Inputs!B16"
+  ArbitrageRevenue_Q8: "Inputs!B17"
+  Opex_Q1:             "Inputs!B18"
+  Opex_Q2:             "Inputs!B19"
+  Opex_Q3:             "Inputs!B20"
+  Opex_Q4:             "Inputs!B21"
+  Opex_Q5:             "Inputs!B22"
+  Opex_Q6:             "Inputs!B23"
+  Opex_Q7:             "Inputs!B24"
+  Opex_Q8:             "Inputs!B25"
+  InterestRate:        "Inputs!B26"
+  DSRA_Target:         "Inputs!B27"
+  DSRA_Balance:        "Inputs!B28"
+
+covenants:
+  - name: DSCR Lock-up
+    description: "Distribution lock-up if DSCR < 1.25x in any period"
+    output: DSCR
+    operator: ">="
+    threshold: 1.25
+    severity: breach
+    tested_periods: current
+
+  - name: Forecast DSCR Floor
+    description: "Forecast minimum DSCR over remaining tenor must remain >= 1.20x"
+    output: MinDSCRForecast
+    operator: ">="
+    threshold: 1.20
+    severity: breach
+    tested_periods: forecast
+
+  - name: LLCR Floor
+    description: "LLCR must remain >= 1.40x"
+    output: LLCR
+    operator: ">="
+    threshold: 1.40
+    severity: breach
+    tested_periods: current
+
+  - name: DSRA Funding
+    description: "DSRA balance must be >= DSRA target (CAD 6.5M)"
+    output: DSRA
+    operator: ">="
+    threshold: 6500000
+    severity: breach
+    tested_periods: current

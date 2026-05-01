@@ -1,0 +1,50 @@
+**COVENANT BREACH NOTICE**
+
+| | |
+|---|---|
+| Borrower      | {{ deal.borrower }}                     |
+| Project       | {{ deal.project }}                      |
+| Facility      | {{ deal.facility }}                     |
+| Notice date   | {{ today }}                             |
+| Test period   | {{ period or "—" }}                     |
+
+---
+
+Pursuant to the facility agreement dated {{ deal.closing_date }} (§[ref]),
+this notice records that the most recent covenant test, as conducted by
+the Lender on {{ today }}, has identified the following breach(es):
+
+{% set breaches = covenants | selectattr("severity", "equalto", "breach") | list %}
+{% if breaches %}
+| Covenant | Required | Actual | Margin |
+|---|---|---|---|
+{% for c in breaches %}
+| {{ c.name }} | {{ c.output }} {{ c.operator }} {{ c.threshold }} | {{ c.actual | ratio if c.actual is not none else "—" }} | {{ ((c.actual - c.threshold) / c.threshold * 100) | round(2) if c.actual is not none else "—" }}% |
+{% endfor %}
+{% else %}
+_No breaches were detected at the time of rendering. This notice should not
+have been issued. Please verify before sending._
+{% endif %}
+
+For context, the headline outputs at the test date were:
+
+| Metric | Value |
+|---|---|
+| DSCR                       | {{ outputs.DSCR | ratio if outputs.DSCR is not none else "—" }} |
+| LLCR                       | {{ outputs.LLCR | ratio if outputs.LLCR is not none else "—" }} |
+| Outstanding senior debt    | {{ outputs.DebtBalance | money(deal.currency) if outputs.DebtBalance is not none else "—" }} |
+{% if outputs.DSRA is defined %}
+| DSRA balance               | {{ outputs.DSRA | money(deal.currency) if outputs.DSRA is not none else "—" }} |
+{% endif %}
+
+The Borrower is required to respond in accordance with the cure provisions
+in §[ref] of the facility agreement. The Lender reserves all rights and
+remedies available under the facility documents and at law.
+
+The Borrower is invited to contact the Lender to discuss a remediation
+plan within the period specified in §[ref].
+
+---
+
+Issued by: Canada Infrastructure Bank · Credit Risk
+Contact: {{ deal.parties.lender.contact if deal.parties.lender is defined else "credit@cib-bic.ca" }}
